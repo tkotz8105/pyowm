@@ -29,6 +29,9 @@ class WeatherManager:
         assert isinstance(API_key, str), 'You must provide a valid API Key'
         self.API_key = API_key
         assert isinstance(config, dict)
+        if 'url' in config:
+            assert isinstance(config['url'], str)         
+            ROOT_WEATHER_API = config['url']
         self.http_client = HttpClient(API_key, config, ROOT_WEATHER_API)
 
     def weather_api_version(self):

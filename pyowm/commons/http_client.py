@@ -12,11 +12,12 @@ class HttpRequestBuilder:
 
     URL_TEMPLATE_WITH_SUBDOMAINS = '{}://{}.{}/{}'
     URL_TEMPLATE_WITHOUT_SUBDOMAINS = '{}://{}/{}'
+    URL_TEMPLATE_WITHOUT_SUBDOMAINS_AND_PATH = '{}://{}'
 
     """
     A stateful HTTP URL, params and headers builder with a fluent interface
     """
-    def __init__(self, root_uri_token, api_key, config, has_subdomains=True):
+        def __init__(self, root_uri_token, api_key, config, has_subdomains=True, has_path=True):
         assert isinstance(root_uri_token, str)
         self.root = root_uri_token
         assert isinstance(api_key, str)
@@ -25,6 +26,14 @@ class HttpRequestBuilder:
         self.config = config
         assert isinstance(has_subdomains, bool)
         self.has_subdomains = has_subdomains
+        if 'has_subdomains' in config['connection']:
+            assert isinstance(config['connection']['has_subdomains'], bool)
+            self.has_subdomains = config['connection']['has_subdomains']
+        assert isinstance(has_path, bool)        
+        if 'has_path' in config['connection']:
+            assert isinstance(config['connection']['has_path'], bool)
+            self.has_path = config['connection']['has_path']        
+
         self.schema = None
         self.subdomain = None
         self.proxies = None
@@ -83,12 +92,15 @@ class HttpRequestBuilder:
         return self
 
     def build(self):
-        if self.has_subdomains:
+        if self.has_subdomains and self.has_path:
             return self.URL_TEMPLATE_WITH_SUBDOMAINS.format(self.schema, self.subdomain, self.root, self.path), \
                    self.params, self.headers, self.proxies
-        else:
+        elif not self.has_subdomains and self.has_path:
             return self.URL_TEMPLATE_WITHOUT_SUBDOMAINS.format(self.schema, self.root, self.path), \
                    self.params, self.headers, self.proxies
+        elif not self.has_subdomains and not self.has_path:
+            return self.URL_TEMPLATE_WITHOUT_SUBDOMAINS_AND_PATH.format(self.schema, self.root), \
+                   self.params, self.headers, self.proxies              
 
     def __repr__(self):
         return "<%s.%s>" % (__name__, self.__class__.__name__)
@@ -121,7 +133,7 @@ class HttpClient:
 
     def get_json(self, path, params=None, headers=None):
         builder = HttpRequestBuilder(self.root_uri, self.api_key, self.config, has_subdomains=self.admits_subdomains)\
-            .with_path(path)\
+            .with_path(path if path is not None else str)\
             .with_api_key()\
             .with_language()\
             .with_query_params(params if params is not None else dict())\
