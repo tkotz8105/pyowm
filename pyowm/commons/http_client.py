@@ -17,7 +17,7 @@ class HttpRequestBuilder:
     """
     A stateful HTTP URL, params and headers builder with a fluent interface
     """
-        def __init__(self, root_uri_token, api_key, config, has_subdomains=True, has_path=True):
+    def __init__(self, root_uri_token, api_key, config, has_subdomains=True, has_path=True):
         assert isinstance(root_uri_token, str)
         self.root = root_uri_token
         assert isinstance(api_key, str)
